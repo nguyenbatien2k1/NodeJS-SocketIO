@@ -19,7 +19,8 @@
   "homepage": "https://github.com/nguyenbatien2k1/NodeJS-SocketIO#readme",
   "dependencies": {
     "ejs": "^3.1.9",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.21.0",
