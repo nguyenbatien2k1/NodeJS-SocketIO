@@ -9,10 +9,38 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <h1>hello world 2</h1>
+    
+    <button id="red">Red</button>
+    <button id="yellow">Yellow</button>
+    <button id="blue">Blue</button>
+
+    <div id="content" style="display: flex; height: 200px; width: 200px; align-items: center; justify-content: center; border: 1px solid black;">tin iu xun</div>
     
     <script>
+
         let socket = io('http://localhost:3000')
+
+        let btnRed = document.querySelector('#red');
+        let btnYellow = document.querySelector('#yellow');
+        let btnBlue = document.querySelector('#blue');
+        let content = document.querySelector('#content');
+
+        btnRed.addEventListener('click', function() {
+            socket.emit('client-send-data', "red")
+        })
+
+        btnYellow.addEventListener('click', function() {
+            socket.emit('client-send-data', "yellow")
+        })
+
+        btnBlue.addEventListener('click', function() {
+            socket.emit('client-send-data', "blue")
+        })
+
+        socket.on('server-send-data', (data) => {
+            content.style.backgroundColor = data;
+        })
+
     </script>
 </body>
 </html>
