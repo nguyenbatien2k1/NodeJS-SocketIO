@@ -1,0 +1,59 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.wrapper {
+    height: 100vh;
+}
+
+.loginForm {
+    background-color: yellowgreen;
+    height: 200px;
+}
+
+.chatForm {
+    display: flex;
+    height: 300px;
+}
+
+.left{
+    width: 30%;
+    background-color: aquamarine;
+    padding: 8px 16px;
+}
+
+.users-online {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.list-user-online{
+
+}
+
+.right{
+    width: 70%;
+    background-color: bisque;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+
+}
+
+.welcom {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 4px;
+}
+
+.list-message{
+    height: 200px;
+    background-color: blueviolet;
+}
+
+.btn-warning {
+    min-width: 100px;
+}

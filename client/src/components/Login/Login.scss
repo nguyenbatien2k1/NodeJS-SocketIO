@@ -1,0 +1,98 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.login-container {
+    background-color: yellowgreen;
+
+    .form-group {
+
+        label {
+            margin: 4px 16px;
+        }
+    }
+
+    span {
+        margin: 4px 16px;
+    }
+}
+
+.chat-container {
+    display: flex;
+    min-height: 300px;
+    align-items: center;
+    justify-content: center;
+
+    .container {
+        display: flex;
+
+        .left{
+            width: 30%;
+            background-color: aquamarine;
+            padding: 8px 16px;
+
+            .users-online {
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+            .list-user-online{
+
+            }
+        }
+
+        .right{
+            width: 70%;
+            background-color: bisque;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 16px;
+            
+            .welcom {
+                display: flex;
+                align-items: center;
+                justify-content: end;
+                gap: 4px;
+            }
+
+            .list-message{
+                min-height: 200px;
+                background-color: blueviolet;
+                padding: 8px 16px;
+                display: flex;
+                flex-direction: column;
+
+            
+
+                .your-message {
+                    background-color: #0084ff;
+                    color: #fff;
+                    min-height: 30px;
+                    padding: 0 8px;
+                    display: flex;
+                    align-items: center;
+                    border-radius: 12px;
+                    width: 50%;
+                    margin-left: 50%;
+                }
+
+                .other-message {
+                    background-color: #e4e6eb;
+                    min-height: 30px;
+                    padding: 0 8px;
+                    display: flex;
+                    align-items: center;
+                    border-radius: 12px;
+                    width: 50%;
+
+                }
+
+                .typing {
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+}
