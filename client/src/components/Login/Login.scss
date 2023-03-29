@@ -20,18 +20,24 @@
 }
 
 .chat-container {
+    height: 100vh;
     display: flex;
-    min-height: 300px;
     align-items: center;
     justify-content: center;
+    background-color: #f5f5f5;
 
     .container {
         display: flex;
+        height: 500px;
+        gap: 12px;
 
         .left{
             width: 30%;
-            background-color: aquamarine;
+            height: 100%;
+            background-color: rgb(181, 226, 211);
             padding: 8px 16px;
+            border-radius: 16px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 
             .users-online {
                 font-size: 20px;
@@ -40,52 +46,69 @@
 
             .list-user-online{
 
+                .user-online {
+                    background-color: rgb(240, 234, 234);
+                    margin-bottom: 8px;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                }
             }
         }
 
         .right{
             width: 70%;
+            height: 100%;
             background-color: bisque;
             display: flex;
             flex-direction: column;
             padding: 8px 16px;
+            border-radius: 16px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
             
             .welcom {
                 display: flex;
                 align-items: center;
                 justify-content: end;
                 gap: 4px;
+
+                .current-user {
+                    margin-right: 16px;
+                    font-weight: 600;
+                }
             }
 
             .list-message{
-                min-height: 200px;
-                background-color: blueviolet;
-                padding: 8px 16px;
-                display: flex;
-                flex-direction: column;
-
-            
+                height: 380px;
+                background-color: #fff;
+                padding: 0 16px;
+                border-radius: 8px;
+                overflow: hidden;
+                overflow-y: scroll;
 
                 .your-message {
                     background-color: #0084ff;
                     color: #fff;
-                    min-height: 30px;
+                    height: 30px;
                     padding: 0 8px;
                     display: flex;
                     align-items: center;
                     border-radius: 12px;
                     width: 50%;
                     margin-left: 50%;
+                    margin-top: 4px;
+                    margin-bottom: 4px;
                 }
 
                 .other-message {
                     background-color: #e4e6eb;
-                    min-height: 30px;
+                    height: 30px;
                     padding: 0 8px;
                     display: flex;
                     align-items: center;
                     border-radius: 12px;
                     width: 50%;
+                    margin-top: 4px;
+                    margin-bottom: 4px;
 
                 }
 

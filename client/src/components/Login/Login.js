@@ -18,6 +18,7 @@ function Login() {
     const [listMessage, setListMessage] = useState([]);
     const [typing, setTyping] = useState('');
 
+    const listMessageRef = useRef();
     const socketRef = useRef();
 
     useEffect(() => {
@@ -26,6 +27,10 @@ function Login() {
 
         socketRef.current.on('getId', data => {
             setId(data)
+        })
+
+        socketRef.current.on('server-send-list-user', (data) => {
+            setListUser(data);
         })
 
         socketRef.current.on('server-send-value', data => {
@@ -41,6 +46,21 @@ function Login() {
         socketRef.current.on('server-send-user-stop-typing', () => {
             setTyping('')
         })
+
+        window.addEventListener('unload', () => {
+            socketRef.current.emit('logout');
+            socketRef.current.disconnect();
+
+            socketRef.current.on('server-send-user-stop-typing', () => {
+                setTyping('')
+            })
+
+            setTimeout(() => {
+                setFormChat(false);
+                setFormLogin(true);
+                setMessage('')
+            }, 1000);
+            })
 
         return () => {
             socketRef.current.disconnect();
@@ -67,9 +87,7 @@ function Login() {
                 setMessage('Tên người dùng đã tồn tại!');
             })
 
-            socketRef.current.on('server-send-list-user', (data) => {
-                setListUser(data)
-            })
+            
         }
     }
 
@@ -77,10 +95,14 @@ function Login() {
         socketRef.current.emit('logout');
         socketRef.current.disconnect();
 
+        socketRef.current.on('server-send-user-stop-typing', () => {
+            setTyping('')
+        })
+
         setTimeout(() => {
             setFormChat(false);
             setFormLogin(true);
-            setMessage('')
+            setMessage('');
         }, 1000);
     }
 
@@ -89,6 +111,10 @@ function Login() {
             socketRef.current.emit('user-send-value', value);
             setValue('');
         }
+
+        setTimeout(function() {
+            listMessageRef.current.scrollTop = listMessageRef.current.scrollHeight;
+        }, 50);
     }
 
     const handleFocus = () => {
@@ -97,6 +123,19 @@ function Login() {
 
     const handleBlur = () => {
         socketRef.current.emit('user-stop-typing')
+    }
+
+    const handleKeyDown = (e) => {
+        if(e.key === 'Enter') {
+            if(value) {
+                socketRef.current.emit('user-send-value', value);
+                setValue('');
+            }
+
+            setTimeout(function() {
+                listMessageRef.current.scrollTop = listMessageRef.current.scrollHeight;
+            }, 50);
+        }
     }
 
     return (
@@ -141,7 +180,7 @@ function Login() {
                                     listUser && listUser.length > 0 &&
                                     listUser.map((item, index) => {
                                         return (
-                                            <div key={index}>{item}</div>
+                                            <div key={index} className='user-online'>{item === user ? `${item} ( Tôi )` : `${item}`}</div>
                                         )
                                     })
                                 }
@@ -156,12 +195,12 @@ function Login() {
                                 >Thoát khỏi đây</button>
                             </div>
 
-                            <div className="list-message my-3">
+                            <div className="list-message my-3" ref={listMessageRef}>
                                 {
                                     listMessage && listMessage.length > 0 &&
                                     listMessage.map((item, index) => {
                                         return (
-                                            <div key={index} className={item.id === id ? `your-message my-2` : `other-message my-2`}>
+                                            <div key={index} className={item.id === id ? `your-message` : `other-message`}>
                                                 {item.username}: {item.content}
                                             </div>
                                         )
@@ -178,6 +217,7 @@ function Login() {
                                     onChange={(e) => setValue(e.target.value)}
                                     onFocus={handleFocus}
                                     onBlur={handleBlur}
+                                    onKeyPress={(e) => handleKeyDown(e)}
                                 />
                                 <button 
                                     type="button" 

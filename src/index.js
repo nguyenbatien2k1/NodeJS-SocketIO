@@ -24,7 +24,11 @@ let manageUsers = [];
 io.on('connection', (socket) => {
     
     socket.on('disconnect', () => {
-        console.log('Nguoi nay da ngat ket noi: ', socket.id)
+        console.log('Nguoi nay da ngat ket noi: ', socket.username);
+        manageUsers = manageUsers.filter(item => item !== socket.username)
+        console.log(manageUsers);
+        socket.broadcast.emit('server-send-list-user', manageUsers);
+        socket.broadcast.emit('server-send-user-stop-typing');       
     })
 
     socket.on('client-send-username', (data) => {
