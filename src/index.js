@@ -19,42 +19,93 @@ const io = require('socket.io')(server, {
     }
 });
 
-let manageUsers = [];
+let manageUsers = [
+    {
+        username: 'admin',
+        password: 'admin'
+    }
+];
+
+let usersOnline = [
+    {
+        username: 'admin'
+    }
+]
 
 io.on('connection', (socket) => {
     
     socket.on('disconnect', () => {
-        console.log('Nguoi nay da ngat ket noi: ', socket.username);
-        manageUsers = manageUsers.filter(item => item !== socket.username)
-        console.log(manageUsers);
-        socket.broadcast.emit('server-send-list-user', manageUsers);
+        usersOnline = usersOnline.filter(item => item.username !== socket.username)
+        socket.broadcast.emit('server-send-list-user', usersOnline);
         socket.broadcast.emit('server-send-user-stop-typing');       
     })
 
-    socket.on('client-send-username', (data) => {
-        if(manageUsers.includes(data)) {
-            socket.emit('server-send-username-failed');
+    socket.on('client-send-register', (data) => {
+        let checkUser = false;
+        
+        for (let i = 0; i < manageUsers.length; i++) {
+            if(manageUsers[i].username === data.username) {
+                checkUser = true;
+                break;
+            }
+        }
+        if(checkUser) {
+            socket.emit('server-send-register-failed');
         }
         else {
             manageUsers.push(data);
-            socket.username = data;
+
+            usersOnline.push({
+                username: data.username
+            })
+
+            socket.username = data.username;
 
             socket.emit('getId', socket.id);
 
-            socket.emit('server-send-username-success', data);
+            socket.emit('server-send-register-success', data.username);
             
-            io.sockets.emit('server-send-list-user', manageUsers);
+            io.sockets.emit('server-send-list-user', usersOnline);
 
-            console.log('Co nguoi vua ket noi: ', socket.username);
-            console.log(manageUsers);
+        } 
+    })
+
+    socket.on('client-send-login', (data) => {
+        let checkUser = false;
+        if(manageUsers.length === 0) {
+            socket.emit('server-send-login-failed');
+            return;
+        }
+        for (let i = 0; i < manageUsers.length; i++) {
+            if(manageUsers[i].username === data.username && manageUsers[i].password === data.password) {
+                checkUser = true;
+                break;
+            }
+        }
+        if(!checkUser) {
+            socket.emit('server-send-login-failed');
+        }
+        else {
+            data = {username: data.username};
+
+            usersOnline = usersOnline.filter(item => item.username !== data.username);
+
+            usersOnline.push(data);
+
+            socket.username = data.username;
+
+            socket.emit('getId', socket.id);
+
+            socket.emit('server-send-login-success', data.username);
+            
+            io.sockets.emit('server-send-list-user', usersOnline);
+
         } 
     })
 
     socket.on('logout', () => {
-        manageUsers = manageUsers.filter(item => item !== socket.username)
-        console.log(manageUsers)
-
-        socket.broadcast.emit('server-send-list-user', manageUsers);
+        usersOnline = usersOnline.filter(item => item.username !== socket.username);
+        socket.broadcast.emit('server-send-list-user', usersOnline);
     })
 
     socket.on('user-send-value', data => {

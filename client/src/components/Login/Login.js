@@ -1,238 +1,137 @@
-import { useEffect, useRef, useState } from 'react';
-import userService from '../../services/userService.js';
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import socketIOClient from "socket.io-client";
-import './Login.scss'
 
-const host = 'http://localhost:8080/'
+import './Login.scss';
+
+const host = 'http://localhost:8080/';
 
 function Login() {
+   
+   const [id, setId] = useState();
+   const [username, setUsername] = useState('');
+   const [password, setPassword] = useState('');
+   const [isShowPassword, setIsShowPassword] = useState(false);
+   const [errMessage, setErrMessage] = useState('');
 
-    const [id, setId] = useState();
-    const [username, setUsername] = useState('');
-    const [message, setMessage] = useState('');
-    const [formLogin, setFormLogin] = useState(true);
-    const [formChat, setFormChat] = useState(false);
-    const [user, setUser] = useState('');
-    const [listUser, setListUser] = useState([]);
-    const [value, setValue] = useState('');
-    const [listMessage, setListMessage] = useState([]);
-    const [typing, setTyping] = useState('');
+   const socketRef = useRef();
 
-    const listMessageRef = useRef();
-    const socketRef = useRef();
+   const navigate = useNavigate();
 
-    useEffect(() => {
-
+   useEffect(() => {
         socketRef.current = socketIOClient.connect(host);
 
         socketRef.current.on('getId', data => {
             setId(data)
         })
 
-        socketRef.current.on('server-send-list-user', (data) => {
-            setListUser(data);
-        })
-
-        socketRef.current.on('server-send-value', data => {
-            setListMessage((oldMessage) => {
-                return [...oldMessage, data]
-            })
-        })
-
-        socketRef.current.on('server-send-user-typing', data => {
-            setTyping(data);
-        })
-
-        socketRef.current.on('server-send-user-stop-typing', () => {
-            setTyping('')
-        })
-
-        window.addEventListener('unload', () => {
-            socketRef.current.emit('logout');
-            socketRef.current.disconnect();
-
-            socketRef.current.on('server-send-user-stop-typing', () => {
-                setTyping('')
-            })
-
-            setTimeout(() => {
-                setFormChat(false);
-                setFormLogin(true);
-                setMessage('')
-            }, 1000);
-            })
-
         return () => {
             socketRef.current.disconnect();
         };
-        }, [])
+   }, [])
 
-    const handleClickRegister = () => {
-        if(username) {
+    const handleEventShowHidePassword = () => {
+        setIsShowPassword(!isShowPassword);
+    }
 
-            socketRef.current.emit('client-send-username', username);
+    const handleClickLogin = () => {
+        setErrMessage('');
+
+        if(username && password) {
+            socketRef.current.emit('client-send-username', {
+                username,
+                password
+            });
 
             socketRef.current.on('server-send-username-success', data => {
-                setMessage('Đăng ký tài khoản thành công!');
-                setUsername('');
-                setTimeout(() => {
-                    setFormLogin(false);
-                    setFormChat(true);
-                    setUser(data)
-                    listUser.push(data);
-                }, 1000);
+                setErrMessage('Đăng nhập thành công ! Vui lòng chờ...')
+                navigate('/chatroom');
             })
 
             socketRef.current.on('server-send-username-failed', () => {
-                setMessage('Tên người dùng đã tồn tại!');
+                setErrMessage('Thông tin tài khoản hoặc mật khẩu không chính xác!')
             })
-
-            
+        }
+        else {
+            setErrMessage('Vui lòng điền đầy đủ thông tin!')
         }
     }
 
-    const handleClickLogout = () => {
-        socketRef.current.emit('logout');
-        socketRef.current.disconnect();
-
-        socketRef.current.on('server-send-user-stop-typing', () => {
-            setTyping('')
-        })
-
-        setTimeout(() => {
-            setFormChat(false);
-            setFormLogin(true);
-            setMessage('');
-        }, 1000);
-    }
-
-    const handleSend = () => {
-        if(value) {
-            socketRef.current.emit('user-send-value', value);
-            setValue('');
-        }
-
-        setTimeout(function() {
-            listMessageRef.current.scrollTop = listMessageRef.current.scrollHeight;
-        }, 50);
-    }
-
-    const handleFocus = () => {
-        socketRef.current.emit('user-typing', user) 
-    }
-
-    const handleBlur = () => {
-        socketRef.current.emit('user-stop-typing')
-    }
-
-    const handleKeyDown = (e) => {
-        if(e.key === 'Enter') {
-            if(value) {
-                socketRef.current.emit('user-send-value', value);
-                setValue('');
-            }
-
-            setTimeout(function() {
-                listMessageRef.current.scrollTop = listMessageRef.current.scrollHeight;
-            }, 50);
+    const handleEventKeyDown = (e) => {
+        if(e.key === 'Enter' || e.keyCode === 13) {
+            handleClickLogin();
         }
     }
-
-    return (
+    
+   return (
         <>
-            {
-                formLogin && 
-                <div className="login-container">
-                    <div className='container'>
-                        <div className="form-group">
-                            <label>Nhập tên của bạn</label>
-                            <div className="input-group col-4">
+            <div className='login-background'>
+                <div className='login-container'>
+                    <div className='login-content row'>
+                        <div className='col-12 text-center login-text'>Login</div>
+                        
+                        <div className='col-12 form-group login-input'>
+                            <label htmlFor='username'>User name</label>
+                            <input 
+                                type='text' 
+                                className='form-control' 
+                                id='username'
+                                name='username'
+                                placeholder='Enter your username...'
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)} 
+                                onKeyDown={(e) => handleEventKeyDown(e)}
+                                />
+                        </div>
+                        
+                        <div className='col-12 form-group login-input'>
+                            <label htmlFor='password'>Password</label>
+                            <div className='custom-input-password'>
                                 <input
-                                    value={username} 
-                                    type="text" 
-                                    className="form-control"
-                                    onChange={(e) => setUsername(e.target.value)} 
+                                    className='form-control' 
+                                    type={isShowPassword ? 'text' : 'password'} 
+                                    id='password' 
+                                    name='password'
+                                    placeholder='Enter your password...'
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    onKeyDown={(e) => handleEventKeyDown(e)}
                                 />
-            
-                                <div className="input-group-append">
-                                    <button
-                                        type="button" 
-                                        className="btn btn-primary"
-                                        onClick={handleClickRegister}
-                                    >Đăng ký</button>
-                                </div>
-                                
+                                <span
+                                    onClick={() => handleEventShowHidePassword()}
+                                >
+                                    <i className={isShowPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>  
+                                </span>
                             </div>
                         </div>
-                        <span>{message}</span>
-                    </div>
-                </div>
-            }
 
-            {
-                formChat && 
-                <div className="chat-container">
-                    <div className='container'>
-                        <div className="left">
-                            <div className="users-online mb-3">Những người đang online</div>
-                            <div className="list-user-online">
-                                {
-                                    listUser && listUser.length > 0 &&
-                                    listUser.map((item, index) => {
-                                        return (
-                                            <div key={index} className='user-online'>{item === user ? `${item} ( Tôi )` : `${item}`}</div>
-                                        )
-                                    })
-                                }
-                            </div>
+                        <div className='col-12' style={{color: "red"}}>{errMessage}</div>
+                        <div className='col-12'>
+                            <button 
+                                className='btn-login'
+                                onClick={(e) => handleClickLogin(e)}
+                                >
+                                    Login
+                            </button>
                         </div>
-                        <div className="right">
-                            <div className="welcom">Xin chào, <span className="current-user">{user}</span>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-primary"
-                                    onClick={handleClickLogout}
-                                >Thoát khỏi đây</button>
-                            </div>
 
-                            <div className="list-message my-3" ref={listMessageRef}>
-                                {
-                                    listMessage && listMessage.length > 0 &&
-                                    listMessage.map((item, index) => {
-                                        return (
-                                            <div key={index} className={item.id === id ? `your-message` : `other-message`}>
-                                                {item.username}: {item.content}
-                                            </div>
-                                        )
-                                    })
-                                }
-                                <div className='user-typing'>{typing}</div>
-                            </div>
+                        <div className='col-12'>
+                            <span className='forgot-password'>Forgot your password?</span>
+                        </div>
 
-                            <div className="input-group">
-                                <input 
-                                    className="form-control"
-                                    type="text"
-                                    value={value}
-                                    onChange={(e) => setValue(e.target.value)}
-                                    onFocus={handleFocus}
-                                    onBlur={handleBlur}
-                                    onKeyPress={(e) => handleKeyDown(e)}
-                                />
-                                <button 
-                                    type="button" 
-                                    className="btn btn-warning"
-                                    onClick={handleSend}
-                                    style={{minWidth: '100px'}}
-                                >Gửi</button>
-                            </div>
+                        <div className='col-12 text-center mt-3'>
+                            <span className='other-login'>Or Login With:</span>
+                        </div>
+
+                        <div className='col-12 login-social'>
+                            <i className="fab fa-facebook-f facebook"></i>
+                            <i className="fab fa-google google"></i>
                         </div>
                     </div>
                 </div>
-            }
-
+            </div>
         </>
-    )
+   )
 }
 
 export default Login;
