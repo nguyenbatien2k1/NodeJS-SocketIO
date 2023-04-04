@@ -1,15 +1,35 @@
 import express from 'express';
 import configViewEngine from './config/viewEngine.js';
 import cors from 'cors';
+import initWebRoutes from './route/web.js';
+import database from './config/database/index.js';
+import bodyParser from 'body-parser';
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
+import User from './models/User.js';
 
 const app = express()
 const port = 8080
 
+// Connect DB
+database.connect();
+
 // config view engine
 configViewEngine(app);
 
+// JWT
+
+
+// cookieParser
+app.use(cookieParser());
+
+
 // cors
 app.use(cors())
+
+// bodyParser
+app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.json())
 
 // socket.io
 const server = require('http').createServer(app);
@@ -18,6 +38,7 @@ const io = require('socket.io')(server, {
         origin: '*'
     }
 });
+
 
 let manageUsers = [
     {
@@ -40,20 +61,17 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('server-send-user-stop-typing');       
     })
 
-    socket.on('client-send-register', (data) => {
-        let checkUser = false;
+    socket.on('client-send-register', async (data) => {
+
+        manageUsers = await User.find({});
+
+        let checkUser = await User.findOne({username: data.username});
         
-        for (let i = 0; i < manageUsers.length; i++) {
-            if(manageUsers[i].username === data.username) {
-                checkUser = true;
-                break;
-            }
-        }
         if(checkUser) {
             socket.emit('server-send-register-failed');
         }
         else {
-            manageUsers.push(data);
+            await User.create(data);
 
             usersOnline.push({
                 username: data.username
@@ -63,30 +81,32 @@ io.on('connection', (socket) => {
 
             socket.emit('getId', socket.id);
 
-            socket.emit('server-send-register-success', data.username);
+            let token = jwt.sign({username: data.username}, 'tienbasic')
+            data.token = token;
+            delete data.password;
+
+            socket.emit('server-send-register-success', data);
             
             io.sockets.emit('server-send-list-user', usersOnline);
 
         } 
     })
 
-    socket.on('client-send-login', (data) => {
-        let checkUser = false;
+    socket.on('client-send-login', async (data) => {
+        manageUsers = await User.find({});
+        let checkUser = await User.findOne({username: data.username, password: data.password});
+
         if(manageUsers.length === 0) {
             socket.emit('server-send-login-failed');
             return;
         }
-        for (let i = 0; i < manageUsers.length; i++) {
-            if(manageUsers[i].username === data.username && manageUsers[i].password === data.password) {
-                checkUser = true;
-                break;
-            }
-        }
+
+        
         if(!checkUser) {
             socket.emit('server-send-login-failed');
         }
         else {
-            data = {username: data.username};
+            data = {username: data.username, token: jwt.sign({username: data.username}, 'tienbasic')};
 
             usersOnline = usersOnline.filter(item => item.username !== data.username);
 
@@ -96,7 +116,7 @@ io.on('connection', (socket) => {
 
             socket.emit('getId', socket.id);
 
-            socket.emit('server-send-login-success', data.username);
+            socket.emit('server-send-login-success', data);
             
             io.sockets.emit('server-send-list-user', usersOnline);
 
@@ -126,13 +146,7 @@ io.on('connection', (socket) => {
 
 });
 
-app.get('/', (req, res) => {
-    return res.render('home')
-})
-
-app.get('/test', (req, res) => {
-    return res.send('Hello Tien nha!')
-})
+initWebRoutes(app);
 
 server.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

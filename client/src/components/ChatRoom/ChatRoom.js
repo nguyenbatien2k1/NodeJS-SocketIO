@@ -26,11 +26,60 @@ function ChatRoom() {
 
    const socketRef = useRef();
 
-   useEffect(() => {
+   function setCookie(name, value, days) {
+    let expires = '';
+    if (days) {
+        let date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = ''; expires='' + date.toUTCString();
+    }
+    document.cookie = name + '=' + (value || '')  + expires + '; path=/';
+    }
+
+    function deleteCookie(name) {   
+        document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+   useEffect( () => {
+
         socketRef.current = socketIOClient.connect(host);
 
         socketRef.current.on('getId', data => {
             setId(data)
+        })
+
+        socketRef.current.on('server-send-register-success', data => {
+            setErrMessage('Đăng ký thành công ! Vui lòng chờ...');
+            setUsername('');
+            setPassword('');
+            setTimeout(() => {
+                setFormLogin(false);
+                setRegister(false);
+                setFormChat(true);
+                setUser(data.username)
+                setCookie(`token`, data.token);
+            }, 1000);
+        })
+
+        socketRef.current.on('server-send-register-failed', () => {
+            setErrMessage('Tên người dùng đã được sử dụng!')
+        })
+
+        socketRef.current.on('server-send-login-success', data => {
+            setErrMessage('Đăng nhập thành công ! Vui lòng chờ...');
+            setUsername('');
+            setPassword('');
+            setTimeout(() => {
+                setFormLogin(false);
+                setRegister(false);
+                setFormChat(true);
+                setUser(data.username);
+                setCookie(`token`, data.token);
+            }, 1000);
+        })
+
+        socketRef.current.on('server-send-login-failed', () => {
+            setErrMessage('Thông tin tài khoản hoặc mật khẩu không chính xác!')
         })
 
         return () => {
@@ -46,57 +95,28 @@ function ChatRoom() {
         setErrMessage('');
 
         if(username && password) {
+
             socketRef.current.emit('client-send-register', {
                 username,
                 password
             });
 
-            socketRef.current.on('server-send-register-success', data => {
-                setErrMessage('Đăng ký thành công ! Vui lòng chờ...');
-                setUsername('');
-                setPassword('');
-                setTimeout(() => {
-                    setFormLogin(false);
-                    setRegister(false);
-                    setFormChat(true);
-                    setUser(data)
-                }, 1000);
-            })
-
-            socketRef.current.on('server-send-register-failed', () => {
-                setErrMessage('Tên người dùng đã được sử dụng!')
-            })
         }
         else {
             setErrMessage('Vui lòng điền đầy đủ thông tin!')
         }
     }
 
-    const handleClickLogin = () => {
+    const handleClickLogin = async () => {
         setErrMessage('');
 
         if(username && password) {
+
             socketRef.current.emit('client-send-login', {
                 username: username,
                 password: password
             });
 
-            socketRef.current.on('server-send-login-success', data => {
-                setErrMessage('Đăng nhập thành công ! Vui lòng chờ...');
-                setUsername('');
-                setPassword('');
-                setTimeout(() => {
-                    setFormLogin(false);
-                    setRegister(false);
-                    setFormChat(true);
-                    setUser(data)
-                    listUser.push(data);
-                }, 1000);
-            })
-
-            socketRef.current.on('server-send-login-failed', () => {
-                setErrMessage('Thông tin tài khoản hoặc mật khẩu không chính xác!')
-            })
         }
         else {
             setErrMessage('Vui lòng điền đầy đủ thông tin!')
@@ -150,6 +170,7 @@ function ChatRoom() {
         window.addEventListener('unload', () => {
             socketRef.current.emit('logout');
             socketRef.current.disconnect();
+            deleteCookie(`token`);
 
             socketRef.current.on('server-send-user-stop-typing', () => {
                 setTyping('')
@@ -167,6 +188,7 @@ function ChatRoom() {
         }, [])
 
     const handleClickLogout = () => {
+        deleteCookie(`token`);
         socketRef.current.emit('logout');
         socketRef.current.disconnect();
 
